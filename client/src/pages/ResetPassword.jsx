@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { API_BASE_URL } from "../api/client";
 
 import {
   Link,
@@ -88,7 +89,7 @@ function ResetPassword() {
       // ---------------------------------
 
       const response = await fetch(
-        `http://localhost:5000/api/auth/reset-password/${token}`,
+        `${API_BASE_URL}/auth/reset-password/${token}`,
         {
           method: "PUT",
 

@@ -5,6 +5,7 @@ import {
   Mail,
   CheckCircle,
 } from "lucide-react";
+import { API_BASE_URL } from "../api/client";
 
 function ForgotPassword() {
   const [email, setEmail] = useState("");
@@ -42,7 +43,7 @@ function ForgotPassword() {
       // ---------------------------------
 
       const response = await fetch(
-        "http://localhost:5000/api/auth/forgot-password",
+        `${API_BASE_URL}/auth/forgot-password`,
         {
           method: "POST",
 

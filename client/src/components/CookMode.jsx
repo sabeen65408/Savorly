@@ -7,7 +7,7 @@ const speeds = [0.8, 1, 1.2, 1.4];
 function CookMode({ recipe, onClose }) {
   const [language, setLanguage] = useState(null);
   const [step, setStep] = useState(0);
-  const [rate, setRate] = useState(1);
+  const [rate, setRate] = useState(0.8);
   const [status, setStatus] = useState("idle");
   const [message, setMessage] = useState("");
   const [translatedTamilInstructions, setTranslatedTamilInstructions] = useState([]);
