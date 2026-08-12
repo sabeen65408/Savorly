@@ -131,6 +131,10 @@ a {
   display: none;
 }
 
+.mobile-navigation {
+  display: none;
+}
+
 /* =========================
    HERO
 ========================= */
@@ -562,6 +566,37 @@ a {
     display: grid;
   }
 
+  .mobile-navigation {
+    display: grid;
+    gap: 4px;
+    padding: 10px 24px 18px;
+    border-top: 1px solid #eee8df;
+    background: rgba(252, 250, 246, .98);
+    box-shadow: 0 12px 22px rgba(47, 35, 26, .08);
+  }
+
+  .mobile-navigation a,
+  .mobile-navigation button {
+    width: 100%;
+    padding: 14px 10px;
+    border: 0;
+    border-radius: 9px;
+    background: transparent;
+    color: #4b4039;
+    font: inherit;
+    font-weight: 600;
+    text-align: left;
+  }
+
+  .mobile-navigation a:hover,
+  .mobile-navigation a:focus-visible,
+  .mobile-navigation button:hover,
+  .mobile-navigation button:focus-visible {
+    background: #fff0e4;
+    color: #b9501f;
+    outline: none;
+  }
+
   .hero {
     grid-template-columns: 1fr;
     gap: 45px;
@@ -596,6 +631,10 @@ a {
 
   .profile-btn span {
     display: none;
+  }
+
+  .mobile-navigation {
+    padding: 10px 16px 18px;
   }
 
   .profile-btn {
