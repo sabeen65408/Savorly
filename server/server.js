@@ -26,9 +26,14 @@ connectDB();
 // MIDDLEWARE
 // =====================================
 
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://savorly-ten.vercel.app",
+];
+
 app.use(
   cors({
-    origin: process.env.CLIENT_URL,
+    origin: allowedOrigins,
   })
 );
 
