@@ -9,7 +9,17 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("savorlyToken");
+  // `savorly_token` is the key managed by AuthContext. Preserve the former
+  // camelCase key briefly so existing signed-in users are not stranded after
+  // the API client is updated.
+  const token =
+    localStorage.getItem("savorly_token") ||
+    localStorage.getItem("savorlyToken");
+
+  if (token && !localStorage.getItem("savorly_token")) {
+    localStorage.setItem("savorly_token", token);
+    localStorage.removeItem("savorlyToken");
+  }
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
