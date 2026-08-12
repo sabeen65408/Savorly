@@ -727,29 +727,6 @@ function RecipeDetails() {
 
         </section>
 
-        <section className="reviews-section" aria-labelledby="reviews-title">
-          <div className="body-heading">
-            <span className="eyebrow">FROM THE COMMUNITY</span>
-            <h2 id="reviews-title">Ratings & reviews</h2>
-          </div>
-
-          <form className="review-form" onSubmit={handleReviewSubmit}>
-            <div>
-              <p className="review-label">Your rating</p>
-              <div className="review-stars" role="radiogroup" aria-label="Choose a rating">
-                {[1, 2, 3, 4, 5].map((rating) => <button key={rating} type="button" role="radio" aria-checked={reviewForm.rating === rating} aria-label={`${rating} star${rating > 1 ? "s" : ""}`} onClick={() => setReviewForm((form) => ({ ...form, rating }))}><Star fill={rating <= reviewForm.rating ? "currentColor" : "none"} /></button>)}
-              </div>
-            </div>
-            <label>Your review<textarea value={reviewForm.comment} maxLength="1000" placeholder="What did you enjoy about this recipe?" onChange={(event) => setReviewForm((form) => ({ ...form, comment: event.target.value }))} /></label>
-            {reviewError && <p className="review-error" role="alert">{reviewError}</p>}
-            <button className="review-submit" type="submit" disabled={isSavingReview}>{isSavingReview ? "Saving…" : isAuthenticated ? "Submit review" : "Sign in to review"}</button>
-          </form>
-
-          {reviewsLoading && <p className="reviews-status">Loading reviews…</p>}
-          {!reviewsLoading && !reviewError && reviews.length === 0 && <p className="reviews-status">No reviews yet. Be the first to share your cooking experience.</p>}
-          {!reviewsLoading && reviews.length > 0 && <div className="review-list">{reviews.map((review) => <article className="review-item" key={review._id}><div><strong>{review.user?.name || "Savorly cook"}</strong><span>{new Date(review.updatedAt).toLocaleDateString()}</span></div><div className="review-item-stars" aria-label={`${review.rating} out of 5 stars`}>{[1, 2, 3, 4, 5].map((rating) => <Star key={rating} size={15} fill={rating <= review.rating ? "currentColor" : "none"} />)}</div>{review.comment && <p>{review.comment}</p>}</article>)}</div>}
-        </section>
-
 
         {/* =====================================
             RECIPE BODY
@@ -900,6 +877,29 @@ function RecipeDetails() {
           </div>
 
 
+        </section>
+
+        <section className="reviews-section" aria-labelledby="reviews-title">
+          <div className="body-heading">
+            <span className="eyebrow">FROM THE COMMUNITY</span>
+            <h2 id="reviews-title">Ratings & reviews</h2>
+          </div>
+
+          <form className="review-form" onSubmit={handleReviewSubmit}>
+            <div>
+              <p className="review-label">Your rating</p>
+              <div className="review-stars" role="radiogroup" aria-label="Choose a rating">
+                {[1, 2, 3, 4, 5].map((rating) => <button key={rating} type="button" role="radio" aria-checked={reviewForm.rating === rating} aria-label={`${rating} star${rating > 1 ? "s" : ""}`} onClick={() => setReviewForm((form) => ({ ...form, rating }))}><Star fill={rating <= reviewForm.rating ? "currentColor" : "none"} /></button>)}
+              </div>
+            </div>
+            <label>Your review<textarea value={reviewForm.comment} maxLength="1000" placeholder="What did you enjoy about this recipe?" onChange={(event) => setReviewForm((form) => ({ ...form, comment: event.target.value }))} /></label>
+            {reviewError && <p className="review-error" role="alert">{reviewError}</p>}
+            <button className="review-submit" type="submit" disabled={isSavingReview}>{isSavingReview ? "Saving…" : isAuthenticated ? "Submit review" : "Sign in to review"}</button>
+          </form>
+
+          {reviewsLoading && <p className="reviews-status">Loading reviews…</p>}
+          {!reviewsLoading && !reviewError && reviews.length === 0 && <p className="reviews-status">No reviews yet. Be the first to share your cooking experience.</p>}
+          {!reviewsLoading && reviews.length > 0 && <div className="review-list">{reviews.map((review) => <article className="review-item" key={review._id}><div><strong>{review.user?.name || "Savorly cook"}</strong><span>{new Date(review.updatedAt).toLocaleDateString()}</span></div><div className="review-item-stars" aria-label={`${review.rating} out of 5 stars`}>{[1, 2, 3, 4, 5].map((rating) => <Star key={rating} size={15} fill={rating <= review.rating ? "currentColor" : "none"} />)}</div>{review.comment && <p>{review.comment}</p>}</article>)}</div>}
         </section>
 
 
