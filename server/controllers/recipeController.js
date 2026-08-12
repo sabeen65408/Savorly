@@ -72,7 +72,7 @@ const translateRecipeToTamil = async (req, res) => {
     // if provided, otherwise fall back to a hosted public endpoint.
     const endpoint = (
       process.env.LIBRETRANSLATE_URL ||
-      "https://libretranslate.de"
+      "https://translate.cutie.dating"
     ).replace(/\/$/, "");
 
     const translateInstruction = async (instruction) => {
@@ -96,18 +96,27 @@ const translateRecipeToTamil = async (req, res) => {
           body: JSON.stringify(payload),
         });
       } catch (providerError) {
-        throw new Error("LibreTranslate is not running");
+        throw new Error(`Translation service connection failed: ${providerError.message}`);
       }
 
       if (!translationResponse.ok) {
-        console.error("LibreTranslate error:", translationResponse.status);
-        throw new Error("LibreTranslate could not translate this instruction");
+        const responseBody = await translationResponse.text();
+        console.error(`Translation service returned HTTP ${translationResponse.status}:`, responseBody.slice(0, 500));
+        throw new Error(`Translation service error (HTTP ${translationResponse.status})`);
       }
 
-      const translation = await translationResponse.json();
+      let translation;
+      try {
+        translation = await translationResponse.json();
+      } catch (jsonError) {
+        const responseText = await translationResponse.text();
+        console.error("Failed to parse translation response as JSON:", responseText.slice(0, 500));
+        throw new Error("Translation service returned invalid response format");
+      }
 
       if (!translation.translatedText) {
-        throw new Error("LibreTranslate returned an incomplete translation");
+        console.error("Translation response missing translatedText field:", translation);
+        throw new Error("Translation service returned incomplete response");
       }
 
       return translation.translatedText;
@@ -120,11 +129,12 @@ const translateRecipeToTamil = async (req, res) => {
         recipe.instructions.map(translateInstruction)
       );
     } catch (translationError) {
-      console.error("Tamil translation error:", translationError);
+      console.error("Tamil translation error:", translationError.message);
+      console.error("Full error details:", translationError);
       return res.status(503).json({
         success: false,
-        message:
-          "Tamil translation service is unavailable. Please verify your translation endpoint and try again.",
+        message: `Translation failed: ${translationError.message}`,
+        details: process.env.NODE_ENV === 'development' ? translationError.message : undefined,
       });
     }
 
