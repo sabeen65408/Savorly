@@ -18,6 +18,7 @@ function Register() {
     useState(false);
 
   const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // =====================================
@@ -84,6 +85,8 @@ function Register() {
 
     try {
       setIsSubmitting(true);
+      setError("");
+      setSuccessMessage("");
 
       // ---------------------------------
       // REGISTER API
@@ -126,11 +129,20 @@ function Register() {
       // SUCCESS
       // ---------------------------------
 
-      alert(
-        "Account created successfully! Please sign in."
+      setSuccessMessage(
+        "Account created successfully. Please sign in."
       );
 
-      navigate("/login");
+      setFormData({
+        name: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+      });
+
+      setTimeout(() => {
+        navigate("/login");
+      }, 1400);
 
     } catch (error) {
       console.error(
@@ -228,6 +240,34 @@ function Register() {
             </div>
           )}
 
+          {successMessage && (
+            <div className="auth-success">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+              >
+                <path
+                  d="M9 12.5L11.5 15L15 9"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="9"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                />
+              </svg>
+              <span>{successMessage}</span>
+            </div>
+          )}
 
           <form
             onSubmit={handleSubmit}

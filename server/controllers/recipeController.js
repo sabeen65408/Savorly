@@ -68,11 +68,11 @@ const translateRecipeToTamil = async (req, res) => {
       });
     }
 
-    // LibreTranslate runs separately from Savorly, so port 5001 avoids
-    // colliding with the Express API on port 5000.
+    // LibreTranslate runs separately from Savorly. Use LIBRETRANSLATE_URL
+    // if provided, otherwise fall back to a hosted public endpoint.
     const endpoint = (
       process.env.LIBRETRANSLATE_URL ||
-      "http://localhost:5001"
+      "https://libretranslate.de"
     ).replace(/\/$/, "");
 
     const translateInstruction = async (instruction) => {
@@ -120,10 +120,11 @@ const translateRecipeToTamil = async (req, res) => {
         recipe.instructions.map(translateInstruction)
       );
     } catch (translationError) {
+      console.error("Tamil translation error:", translationError);
       return res.status(503).json({
         success: false,
         message:
-          "Tamil translation service is unavailable. Start LibreTranslate and try again.",
+          "Tamil translation service is unavailable. Please verify your translation endpoint and try again.",
       });
     }
 
