@@ -1,4 +1,53 @@
 const Recipe = require("../models/Recipe");
+const Review = require("../models/Review");
+
+const refreshRecipeRating = async (recipeId) => {
+  const summary = await Review.aggregate([
+    { $match: { recipe: recipeId } },
+    { $group: { _id: "$recipe", rating: { $avg: "$rating" }, reviews: { $sum: 1 } } },
+  ]);
+  const values = summary[0] || { rating: 0, reviews: 0 };
+  return Recipe.findByIdAndUpdate(recipeId, {
+    rating: Math.round(values.rating * 10) / 10,
+    reviews: values.reviews,
+  }, { new: true });
+};
+
+const getReviews = async (req, res) => {
+  try {
+    const reviews = await Review.find({ recipe: req.params.id })
+      .populate("user", "name")
+      .sort({ createdAt: -1 });
+    return res.json({ success: true, count: reviews.length, reviews });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Unable to load reviews" });
+  }
+};
+
+const upsertReview = async (req, res) => {
+  try {
+    const rating = Number(req.body.rating);
+    const comment = String(req.body.comment || "").trim();
+    if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+      return res.status(400).json({ success: false, message: "Please choose a rating from 1 to 5 stars" });
+    }
+    if (comment.length > 1000) {
+      return res.status(400).json({ success: false, message: "Your review must be 1000 characters or fewer" });
+    }
+    const recipe = await Recipe.findById(req.params.id);
+    if (!recipe) return res.status(404).json({ success: false, message: "Recipe not found" });
+
+    const review = await Review.findOneAndUpdate(
+      { recipe: recipe._id, user: req.user.userId },
+      { rating, comment },
+      { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true }
+    ).populate("user", "name");
+    const updatedRecipe = await refreshRecipeRating(recipe._id);
+    return res.status(200).json({ success: true, message: "Your review has been saved", review, recipe: updatedRecipe });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Unable to save your review" });
+  }
+};
 
 const translateRecipeToTamil = async (req, res) => {
   try {
@@ -337,6 +386,8 @@ module.exports = {
   getRecipes,
   getRecipe,
   getRelatedRecipes,
+  getReviews,
+  upsertReview,
   translateRecipeToTamil,
   updateRecipe,
   deleteRecipe,

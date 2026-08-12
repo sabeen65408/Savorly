@@ -5,12 +5,15 @@ const {
   getRecipes,
   getRecipe,
   getRelatedRecipes,
+  getReviews,
+  upsertReview,
   translateRecipeToTamil,
   updateRecipe,
   deleteRecipe,
 } = require("../controllers/recipeController");
 
 const router = express.Router();
+const authMiddleware = require("../middleware/authMiddleware");
 
 
 // =====================================
@@ -33,6 +36,9 @@ router.get(
   "/:id/related",
   getRelatedRecipes
 );
+
+router.get("/:id/reviews", getReviews);
+router.put("/:id/reviews", authMiddleware, upsertReview);
 
 // Translate and cache Tamil instructions for Listen & Cook.
 router.post(

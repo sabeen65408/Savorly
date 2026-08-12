@@ -22,6 +22,8 @@ import RecipeCard from "../components/RecipeCard";
 import {
   getRecipeById,
   getRelatedRecipes,
+  getReviews,
+  saveReview,
   deleteRecipe,
 } from "../api/recipeApi";
 import { useAuth } from "../context/AuthContext";
@@ -63,6 +65,11 @@ function RecipeDetails() {
   const [showCookMode, setShowCookMode] = useState(false);
   const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
   const [favoriteError, setFavoriteError] = useState("");
+  const [reviews, setReviews] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
+  const [reviewError, setReviewError] = useState("");
+  const [reviewForm, setReviewForm] = useState({ rating: 0, comment: "" });
+  const [isSavingReview, setIsSavingReview] = useState(false);
 
 
   // =====================================
@@ -108,6 +115,16 @@ function RecipeDetails() {
             response.recipe;
 
           setRecipe(currentRecipe);
+
+          try {
+            setReviewsLoading(true);
+            const reviewsResponse = await getReviews(id);
+            setReviews(reviewsResponse?.reviews || []);
+          } catch {
+            setReviewError("We couldn't load reviews right now.");
+          } finally {
+            setReviewsLoading(false);
+          }
 
 
           // ---------------------------------
@@ -197,6 +214,33 @@ function RecipeDetails() {
       setFavoriteError(requestError.message || "Unable to update saved recipes.");
     } finally {
       setIsTogglingFavorite(false);
+    }
+  };
+
+  const handleReviewSubmit = async (event) => {
+    event.preventDefault();
+    if (!isAuthenticated) {
+      navigate("/login", { state: { from: `/recipes/${id}` } });
+      return;
+    }
+    if (!reviewForm.rating) {
+      setReviewError("Please choose a star rating.");
+      return;
+    }
+    try {
+      setIsSavingReview(true);
+      setReviewError("");
+      const response = await saveReview(id, reviewForm);
+      setRecipe(response.recipe);
+      setReviews((current) => {
+        const exists = current.some((review) => review._id === response.review._id);
+        return exists ? current.map((review) => review._id === response.review._id ? response.review : review) : [response.review, ...current];
+      });
+      setReviewForm({ rating: 0, comment: "" });
+    } catch (requestError) {
+      setReviewError(requestError?.response?.data?.message || "Unable to save your review.");
+    } finally {
+      setIsSavingReview(false);
     }
   };
 
@@ -681,6 +725,29 @@ function RecipeDetails() {
 
           </div>
 
+        </section>
+
+        <section className="reviews-section" aria-labelledby="reviews-title">
+          <div className="body-heading">
+            <span className="eyebrow">FROM THE COMMUNITY</span>
+            <h2 id="reviews-title">Ratings & reviews</h2>
+          </div>
+
+          <form className="review-form" onSubmit={handleReviewSubmit}>
+            <div>
+              <p className="review-label">Your rating</p>
+              <div className="review-stars" role="radiogroup" aria-label="Choose a rating">
+                {[1, 2, 3, 4, 5].map((rating) => <button key={rating} type="button" role="radio" aria-checked={reviewForm.rating === rating} aria-label={`${rating} star${rating > 1 ? "s" : ""}`} onClick={() => setReviewForm((form) => ({ ...form, rating }))}><Star fill={rating <= reviewForm.rating ? "currentColor" : "none"} /></button>)}
+              </div>
+            </div>
+            <label>Your review<textarea value={reviewForm.comment} maxLength="1000" placeholder="What did you enjoy about this recipe?" onChange={(event) => setReviewForm((form) => ({ ...form, comment: event.target.value }))} /></label>
+            {reviewError && <p className="review-error" role="alert">{reviewError}</p>}
+            <button className="review-submit" type="submit" disabled={isSavingReview}>{isSavingReview ? "Saving…" : isAuthenticated ? "Submit review" : "Sign in to review"}</button>
+          </form>
+
+          {reviewsLoading && <p className="reviews-status">Loading reviews…</p>}
+          {!reviewsLoading && !reviewError && reviews.length === 0 && <p className="reviews-status">No reviews yet. Be the first to share your cooking experience.</p>}
+          {!reviewsLoading && reviews.length > 0 && <div className="review-list">{reviews.map((review) => <article className="review-item" key={review._id}><div><strong>{review.user?.name || "Savorly cook"}</strong><span>{new Date(review.updatedAt).toLocaleDateString()}</span></div><div className="review-item-stars" aria-label={`${review.rating} out of 5 stars`}>{[1, 2, 3, 4, 5].map((rating) => <Star key={rating} size={15} fill={rating <= review.rating ? "currentColor" : "none"} />)}</div>{review.comment && <p>{review.comment}</p>}</article>)}</div>}
         </section>
 
 

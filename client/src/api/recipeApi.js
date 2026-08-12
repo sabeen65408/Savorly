@@ -24,6 +24,16 @@ export const translateRecipeToTamil = async (id) => {
   return response.data;
 };
 
+export const getReviews = async (id) => {
+  const response = await API.get(`/recipes/${id}/reviews`);
+  return response.data;
+};
+
+export const saveReview = async (id, review) => {
+  const response = await API.put(`/recipes/${id}/reviews`, review);
+  return response.data;
+};
+
 export const createRecipe = async (recipeData) => {
   const response = await API.post("/recipes", recipeData);
 
