@@ -376,6 +376,8 @@ a {
   border-radius: 22px;
   overflow: hidden;
   transition: 0.25s ease;
+  display: flex;
+  flex-direction: column;
 }
 
 .recipe-card:hover {
@@ -425,19 +427,37 @@ a {
 }
 
 .recipe-content {
-  padding: 18px;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 20px;
 }
 
 .recipe-content h3 {
   font-family: "Playfair Display", serif;
   font-size: 22px;
-  margin-bottom: 12px;
+  margin-bottom: 9px;
+  line-height: 1.18;
+}
+
+.recipe-description {
+  display: -webkit-box;
+  overflow: hidden;
+  min-height: 46px;
+  margin: 0 0 16px;
+  color: #665c55;
+  font-size: 14px;
+  line-height: 1.55;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .recipe-meta {
   display: flex;
-  justify-content: space-between;
-  color: #88817a;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 9px;
+  color: #746b64;
   font-size: 12px;
 }
 
@@ -445,6 +465,16 @@ a {
   display: flex;
   align-items: center;
   gap: 5px;
+}
+
+.recipe-meta > span:first-child {
+  padding-right: 9px;
+  border-right: 1px solid #e7dfd7;
+}
+
+.recipe-difficulty {
+  color: #9c551f;
+  font-weight: 700;
 }
 
 .recipe-link {
@@ -2033,7 +2063,26 @@ a {
 
   gap: 12px;
 
-  margin-top: 18px;
+  margin-top: auto;
+  padding-top: 19px;
+  border-top: 1px solid #f0ebe5;
+}
+
+.view-recipe-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #ad4d1d;
+  font-size: 13px;
+  font-weight: 800;
+  transition: color .2s ease, gap .2s ease;
+}
+
+.view-recipe-link:hover,
+.view-recipe-link:focus-visible {
+  gap: 9px;
+  color: #803512;
+  outline: none;
 }
 
 

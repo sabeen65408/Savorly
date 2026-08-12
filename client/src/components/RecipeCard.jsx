@@ -131,7 +131,7 @@ function RecipeCard({ recipe }) {
           </span>
 
           {recipe.difficulty && (
-            <span>
+            <span className="recipe-difficulty">
               {recipe.difficulty}
             </span>
           )}
@@ -150,7 +150,7 @@ function RecipeCard({ recipe }) {
     to={`/recipes/${recipeId}`}
     className="view-recipe-link"
   >
-    View Recipe
+    View recipe
 
     <ArrowUpRight size={17} />
   </Link>
