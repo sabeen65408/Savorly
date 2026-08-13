@@ -51,6 +51,15 @@ const upsertReview = async (req, res) => {
 
 const translateRecipeToTamil = async (req, res) => {
   try {
+    // Check if API key is configured
+    if (!process.env.SARVAM_API_KEY) {
+      console.error("SARVAM_API_KEY is not configured");
+      return res.status(500).json({
+        success: false,
+        message: "Translation service is not configured. Please contact the administrator.",
+      });
+    }
+
     const recipe = await Recipe.findById(req.params.id);
 
     if (!recipe) {
@@ -60,6 +69,7 @@ const translateRecipeToTamil = async (req, res) => {
       });
     }
 
+    // Return cached Tamil instructions if they exist and match the English instructions count
     if (recipe.instructionsTamil?.length === recipe.instructions.length) {
       return res.status(200).json({
         success: true,
@@ -68,83 +78,97 @@ const translateRecipeToTamil = async (req, res) => {
       });
     }
 
-    // LibreTranslate runs separately from Savorly. Use LIBRETRANSLATE_URL
-    // if provided, otherwise fall back to a hosted public endpoint.
-    const endpoint = (
-      process.env.LIBRETRANSLATE_URL ||
-      "https://translate.cutie.dating"
-    ).replace(/\/$/, "");
+    // Sarvam AI Translation API
+    const SARVAM_API_ENDPOINT = "https://api.sarvam.ai/translate";
 
     const translateInstruction = async (instruction) => {
       const payload = {
-        q: instruction,
-        source: "en",
-        target: "ta",
-        format: "text",
+        input: instruction,
+        source_language_code: "en-IN",
+        target_language_code: "ta-IN",
       };
-
-      if (process.env.LIBRETRANSLATE_API_KEY) {
-        payload.api_key = process.env.LIBRETRANSLATE_API_KEY;
-      }
 
       let translationResponse;
 
       try {
-        translationResponse = await fetch(`${endpoint}/translate`, {
+        translationResponse = await fetch(SARVAM_API_ENDPOINT, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "api-subscription-key": process.env.SARVAM_API_KEY,
+          },
           body: JSON.stringify(payload),
         });
-      } catch (providerError) {
-        throw new Error(`Translation service connection failed: ${providerError.message}`);
+      } catch (networkError) {
+        console.error("Sarvam API connection failed:", networkError.message);
+        throw new Error("Translation service is temporarily unavailable. Please try again.");
       }
 
+      // Handle non-2xx HTTP responses
       if (!translationResponse.ok) {
         const responseBody = await translationResponse.text();
-        console.error(`Translation service returned HTTP ${translationResponse.status}:`, responseBody.slice(0, 500));
+        console.error(
+          `Sarvam API returned HTTP ${translationResponse.status}:`,
+          responseBody.slice(0, 500)
+        );
+
+        if (translationResponse.status === 401 || translationResponse.status === 403) {
+          throw new Error("Translation service authentication failed. Invalid API key.");
+        }
+
+        if (translationResponse.status === 429) {
+          throw new Error("Translation service rate limit exceeded. Please try again later.");
+        }
+
         throw new Error(`Translation service error (HTTP ${translationResponse.status})`);
       }
 
-      let translation;
+      // Parse the JSON response
+      let data;
       try {
-        translation = await translationResponse.json();
+        data = await translationResponse.json();
       } catch (jsonError) {
-        const responseText = await translationResponse.text();
-        console.error("Failed to parse translation response as JSON:", responseText.slice(0, 500));
+        console.error("Failed to parse Sarvam response as JSON");
         throw new Error("Translation service returned invalid response format");
       }
 
-      if (!translation.translatedText) {
-        console.error("Translation response missing translatedText field:", translation);
+      // Check if translated_text exists in response
+      if (!data.translated_text) {
+        console.error("Sarvam response missing translated_text field:", data);
         throw new Error("Translation service returned incomplete response");
       }
 
-      return translation.translatedText;
+      return data.translated_text;
     };
 
+    // Translate all instructions in parallel
     let instructionsTamil;
-
     try {
       instructionsTamil = await Promise.all(
         recipe.instructions.map(translateInstruction)
       );
     } catch (translationError) {
       console.error("Tamil translation error:", translationError.message);
-      console.error("Full error details:", translationError);
       return res.status(503).json({
         success: false,
-        message: `Translation failed: ${translationError.message}`,
-        details: process.env.NODE_ENV === 'development' ? translationError.message : undefined,
+        message: translationError.message || "Unable to translate recipe instructions. Please try again.",
       });
     }
 
-    if (instructionsTamil.length !== recipe.instructions.length || instructionsTamil.some((item) => !item)) {
+    // Validate translation results
+    if (
+      !Array.isArray(instructionsTamil) ||
+      instructionsTamil.length !== recipe.instructions.length ||
+      instructionsTamil.some((item) => !item || typeof item !== "string")
+    ) {
+      console.error("Invalid Tamil instructions received:", instructionsTamil);
       return res.status(502).json({
         success: false,
-        message: "Tamil translation could not be completed",
+        message: "Tamil translation could not be completed. Please try again.",
       });
     }
 
+    // Cache the Tamil translation in the database
     recipe.instructionsTamil = instructionsTamil;
     await recipe.save();
 
@@ -154,10 +178,10 @@ const translateRecipeToTamil = async (req, res) => {
       cached: false,
     });
   } catch (error) {
-    console.error("Tamil translation error:", error);
+    console.error("Tamil translation controller error:", error.message);
     return res.status(500).json({
       success: false,
-      message: "Unable to translate recipe instructions",
+      message: "Unable to translate recipe instructions. Please try again.",
     });
   }
 };
