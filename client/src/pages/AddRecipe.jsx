@@ -542,6 +542,10 @@ function AddRecipe() {
                     Dessert
                   </option>
 
+                  <option value="Snacks">
+                    Snacks
+                  </option>
+
                   <option value="Drinks">
                     Drinks
                   </option>

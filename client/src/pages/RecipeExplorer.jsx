@@ -56,6 +56,7 @@ function RecipeExplorer() {
     "Lunch",
     "Dinner",
     "Dessert",
+    "Snacks",
     "Drinks",
   ];
 
