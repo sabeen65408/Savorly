@@ -10,7 +10,7 @@ import { useAuth } from "../context/AuthContext";
 
 function RecipeCard({ recipe }) {
   const navigate = useNavigate();
-  const { isAuthenticated, favoriteIds, toggleFavorite } = useAuth();
+  const { isAuthenticated, user, favoriteIds, toggleFavorite } = useAuth();
   const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
   const [favoriteError, setFavoriteError] = useState("");
   // ==============================
@@ -40,6 +40,11 @@ function RecipeCard({ recipe }) {
     "https://images.unsplash.com/photo-1498837167922-ddd27525d352";
 
   const isFavorite = favoriteIds.includes(String(recipeId));
+  const isOwner = Boolean(
+    isAuthenticated &&
+    recipe.createdBy &&
+    String(recipe.createdBy._id || recipe.createdBy) === String(user?._id)
+  );
 
   const handleFavorite = async (event) => {
     event.preventDefault();
@@ -155,7 +160,7 @@ function RecipeCard({ recipe }) {
     <ArrowUpRight size={17} />
   </Link>
 
-  {isAuthenticated && <Link
+  {isOwner && <Link
       to={`/recipes/${recipeId}/edit`}
       className="card-edit-btn"
     >

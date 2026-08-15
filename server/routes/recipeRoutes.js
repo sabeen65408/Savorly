@@ -63,6 +63,7 @@ router.get(
 
 router.post(
   "/",
+  authMiddleware,
   createRecipe
 );
 
@@ -73,6 +74,7 @@ router.post(
 
 router.put(
   "/:id",
+  authMiddleware,
   updateRecipe
 );
 
@@ -83,6 +85,7 @@ router.put(
 
 router.delete(
   "/:id",
+  authMiddleware,
   deleteRecipe
 );
 

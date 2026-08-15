@@ -96,6 +96,14 @@ const recipeSchema = new mongoose.Schema(
       type: String,
       default: "Savorly Community",
     },
+
+    // The account that created this recipe. Only this account can edit or delete it.
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+      index: true,
+    },
   },
 
   {

@@ -1,5 +1,6 @@
 const Recipe = require("../models/Recipe");
 const Review = require("../models/Review");
+const User = require("../models/User");
 
 const refreshRecipeRating = async (recipeId) => {
   const summary = await Review.aggregate([
@@ -192,7 +193,20 @@ const translateRecipeToTamil = async (req, res) => {
 
 const createRecipe = async (req, res) => {
   try {
-    const recipe = await Recipe.create(req.body);
+    const creator = await User.findById(req.user.userId).select("name");
+
+    if (!creator) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required",
+      });
+    }
+
+    const recipe = await Recipe.create({
+      ...req.body,
+      author: creator.name,
+      createdBy: creator._id,
+    });
 
     res.status(201).json({
       success: true,
@@ -344,15 +358,7 @@ const getRelatedRecipes = async (req, res) => {
 
 const updateRecipe = async (req, res) => {
   try {
-    const recipe =
-      await Recipe.findByIdAndUpdate(
-        req.params.id,
-        req.body,
-        {
-          new: true,
-          runValidators: true,
-        }
-      );
+    const recipe = await Recipe.findById(req.params.id);
 
     if (!recipe) {
       return res.status(404).json({
@@ -360,6 +366,20 @@ const updateRecipe = async (req, res) => {
         message: "Recipe not found",
       });
     }
+
+    if (!recipe.createdBy || String(recipe.createdBy) !== String(req.user.userId)) {
+      return res.status(403).json({
+        success: false,
+        message: "Only the recipe creator can edit this recipe",
+      });
+    }
+
+    const updates = { ...req.body };
+    delete updates.createdBy;
+    delete updates.author;
+
+    Object.assign(recipe, updates);
+    await recipe.save();
 
     res.status(200).json({
       success: true,
@@ -384,10 +404,7 @@ const updateRecipe = async (req, res) => {
 
 const deleteRecipe = async (req, res) => {
   try {
-    const recipe =
-      await Recipe.findByIdAndDelete(
-        req.params.id
-      );
+    const recipe = await Recipe.findById(req.params.id);
 
     if (!recipe) {
       return res.status(404).json({
@@ -395,6 +412,16 @@ const deleteRecipe = async (req, res) => {
         message: "Recipe not found",
       });
     }
+
+    if (!recipe.createdBy || String(recipe.createdBy) !== String(req.user.userId)) {
+      return res.status(403).json({
+        success: false,
+        message: "Only the recipe creator can delete this recipe",
+      });
+    }
+
+    await recipe.deleteOne();
+    await Review.deleteMany({ recipe: recipe._id });
 
     res.status(200).json({
       success: true,

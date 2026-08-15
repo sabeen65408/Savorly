@@ -35,7 +35,7 @@ function RecipeDetails() {
   const { id } = useParams();
 
   const navigate = useNavigate();
-  const { isAuthenticated, favoriteIds, toggleFavorite } = useAuth();
+  const { isAuthenticated, user, favoriteIds, toggleFavorite } = useAuth();
 
 
   // =====================================
@@ -70,6 +70,11 @@ function RecipeDetails() {
   const [reviewError, setReviewError] = useState("");
   const [reviewForm, setReviewForm] = useState({ rating: 0, comment: "" });
   const [isSavingReview, setIsSavingReview] = useState(false);
+  const isOwner = Boolean(
+    isAuthenticated &&
+    recipe?.createdBy &&
+    String(recipe.createdBy._id || recipe.createdBy) === String(user?._id)
+  );
 
 
   // =====================================
@@ -659,7 +664,7 @@ function RecipeDetails() {
 
               {/* EDIT RECIPE */}
 
-              {isAuthenticated && <Link
+              {isOwner && <Link
                   to={`/recipes/${recipe._id}/edit`}
                   className="edit-recipe-btn"
                 >
@@ -669,7 +674,7 @@ function RecipeDetails() {
 
               {/* DELETE RECIPE */}
 
-              <button
+              {isOwner && <button
                 type="button"
                 className="delete-recipe-btn"
                 onClick={handleDeleteClick}
@@ -681,7 +686,7 @@ function RecipeDetails() {
 
                 Delete
 
-              </button>
+              </button>}
 
 
               {/* SAVE BUTTON */}
