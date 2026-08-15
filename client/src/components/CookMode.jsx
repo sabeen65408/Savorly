@@ -43,10 +43,6 @@ function CookMode({ recipe, onClose }) {
 
   const speak = (stepIndex = step, playbackRate = rate) => {
     if (!supported || !instructions[stepIndex]) return;
-    if (language === "ta-IN" && !selectedVoice) {
-      setMessage("No Tamil voice is installed on this device. Add a Tamil text-to-speech voice in your device settings, then try again.");
-      return;
-    }
     stoppingRef.current = false;
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(instructions[stepIndex]);
@@ -54,7 +50,18 @@ function CookMode({ recipe, onClose }) {
     utterance.rate = playbackRate;
     if (selectedVoice) utterance.voice = selectedVoice;
     utterance.onend = () => {
-      if (!stoppingRef.current) setStatus(stepIndex === instructions.length - 1 ? "complete" : "idle");
+      if (stoppingRef.current) return;
+
+      if (stepIndex === instructions.length - 1) {
+        setStatus("complete");
+        return;
+      }
+
+      const nextStep = stepIndex + 1;
+      setStep(nextStep);
+      window.setTimeout(() => {
+        if (!stoppingRef.current) speak(nextStep, playbackRate);
+      }, 120);
     };
     utterance.onerror = (event) => {
       if (!stoppingRef.current && event.error !== "canceled" && event.error !== "interrupted") setMessage("Voice playback could not start. Check your device volume and text-to-speech settings.");
